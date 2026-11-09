@@ -23,7 +23,6 @@ public record TicketResponse(
         String efsPath,
         String s3Key,
         boolean uploadedToS3,
-        LocalDateTime uploadedAt,
         int fileVersion,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
@@ -32,6 +31,6 @@ public record TicketResponse(
         return new TicketResponse(t.getId(), t.getTicketCode(), t.getEventId(), t.getEventName(),
                 t.getEventDate(), t.getVenue(), t.getUserId(), t.getUserName(), t.getUserEmail(),
                 t.getSeat(), t.getPrice(), t.getStatus(), t.getEfsPath(), t.getS3Key(),
-                t.isUploadedToS3(), t.getUploadedAt(), t.getFileVersion(), t.getCreatedAt(), t.getUpdatedAt());
+                t.isUploadedToS3(), t.getFileVersion(), t.getCreatedAt(), t.getUpdatedAt());
     }
 }

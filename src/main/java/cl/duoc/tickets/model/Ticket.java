@@ -4,15 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -23,17 +20,13 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Codigo legible del ticket, ej: ticket001. Es el nombre del PDF. */
-    @Column(unique = true)
-    private String ticketCode;
+    private String ticketCode;      // ej: ticket001 (nombre del PDF)
 
-    @Column(nullable = false)
     private String eventId;
     private String eventName;
     private LocalDate eventDate;
     private String venue;
 
-    @Column(nullable = false)
     private String userId;
     private String userName;
     private String userEmail;
@@ -44,38 +37,13 @@ public class Ticket {
     @Enumerated(EnumType.STRING)
     private TicketStatus status;
 
-    /** Ruta del PDF dentro del EFS. */
-    private String efsPath;
-
-    /** Llave del objeto en S3: {eventId}/{userId}/{ticketCode}.pdf */
-    private String s3Key;
+    private String efsPath;         // ruta del PDF en el EFS
+    private String s3Key;           // ruta del PDF en S3: evento/usuario/ticket.pdf
     private boolean uploadedToS3;
-    private LocalDateTime uploadedAt;
-
-    /** Se incrementa cada vez que se modifica el ticket y se regenera el PDF. */
-    private int fileVersion;
+    private int fileVersion;        // sube en 1 cada vez que se modifica el ticket
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = createdAt;
-        if (status == null) {
-            status = TicketStatus.RESERVADO;
-        }
-        if (fileVersion == 0) {
-            fileVersion = 1;
-        }
-    }
-
-    @PreUpdate
-    void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // ---- getters / setters ----
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -122,12 +90,12 @@ public class Ticket {
     public boolean isUploadedToS3() { return uploadedToS3; }
     public void setUploadedToS3(boolean uploadedToS3) { this.uploadedToS3 = uploadedToS3; }
 
-    public LocalDateTime getUploadedAt() { return uploadedAt; }
-    public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
-
     public int getFileVersion() { return fileVersion; }
     public void setFileVersion(int fileVersion) { this.fileVersion = fileVersion; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

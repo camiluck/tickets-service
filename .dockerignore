@@ -1,8 +1,4 @@
-target
 .git
-.github
-.idea
-.vscode
-*.iml
 docs
 postman
+src

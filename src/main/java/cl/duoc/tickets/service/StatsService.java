@@ -1,12 +1,10 @@
 package cl.duoc.tickets.service;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -25,44 +23,43 @@ public class StatsService {
         this.repo = repo;
     }
 
-    public List<EventStatsResponse> allEvents() {
-        Map<String, List<Ticket>> byEvent = repo.findAll().stream()
-                .collect(Collectors.groupingBy(Ticket::getEventId, TreeMap::new, Collectors.toList()));
-        return byEvent.entrySet().stream()
-                .map(e -> build(e.getKey(), e.getValue()))
-                .sorted(Comparator.comparing(EventStatsResponse::eventId))
-                .toList();
+    /** Estadisticas de todos los eventos. */
+    public List<EventStatsResponse> todosLosEventos() {
+        Set<String> eventos = new LinkedHashSet<>();
+        for (Ticket t : repo.findAll()) {
+            eventos.add(t.getEventId());
+        }
+        List<EventStatsResponse> resultado = new ArrayList<>();
+        for (String eventId : eventos) {
+            resultado.add(porEvento(eventId));
+        }
+        return resultado;
     }
 
-    public EventStatsResponse forEvent(String eventId) {
+    /** Estadisticas de un evento. */
+    public EventStatsResponse porEvento(String eventId) {
         List<Ticket> tickets = repo.findByEventId(eventId);
         if (tickets.isEmpty()) {
             throw new ResourceNotFoundException("No hay tickets para el evento " + eventId);
         }
-        return build(eventId, tickets);
-    }
 
-    private EventStatsResponse build(String eventId, List<Ticket> tickets) {
-        String eventName = tickets.stream().map(Ticket::getEventName).filter(Objects::nonNull)
-                .findFirst().orElse(eventId);
-        long reservados = count(tickets, TicketStatus.RESERVADO);
-        long vendidos = count(tickets, TicketStatus.PAGADO);
-        long cancelados = count(tickets, TicketStatus.CANCELADO);
-        long usuarios = tickets.stream().filter(t -> t.getStatus() != TicketStatus.CANCELADO)
-                .map(Ticket::getUserId).distinct().count();
-        long enS3 = tickets.stream().filter(Ticket::isUploadedToS3).count();
+        long reservados = 0, vendidos = 0, cancelados = 0;
+        BigDecimal ingresos = BigDecimal.ZERO;
+        BigDecimal montoReservado = BigDecimal.ZERO;
 
-        return new EventStatsResponse(eventId, eventName, tickets.size(), reservados, vendidos, cancelados,
-                sum(tickets, TicketStatus.PAGADO), sum(tickets, TicketStatus.RESERVADO), usuarios, enS3);
-    }
+        for (Ticket t : tickets) {
+            if (t.getStatus() == TicketStatus.RESERVADO) {
+                reservados++;
+                montoReservado = montoReservado.add(t.getPrice());
+            } else if (t.getStatus() == TicketStatus.PAGADO) {
+                vendidos++;
+                ingresos = ingresos.add(t.getPrice());
+            } else if (t.getStatus() == TicketStatus.CANCELADO) {
+                cancelados++;
+            }
+        }
 
-    private static long count(List<Ticket> tickets, TicketStatus s) {
-        return tickets.stream().filter(t -> t.getStatus() == s).count();
-    }
-
-    private static BigDecimal sum(List<Ticket> tickets, TicketStatus s) {
-        return tickets.stream().filter(t -> t.getStatus() == s)
-                .map(Ticket::getPrice).filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new EventStatsResponse(eventId, tickets.get(0).getEventName(), tickets.size(),
+                reservados, vendidos, cancelados, ingresos, montoReservado);
     }
 }

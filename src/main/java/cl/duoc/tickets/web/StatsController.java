@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import cl.duoc.tickets.dto.EventStatsResponse;
 import cl.duoc.tickets.service.StatsService;
 
-/** Reporte de estadisticas de ventas y reservas por evento. */
+// Reportar estadisticas de ventas y reservas por evento
 @RestController
 @RequestMapping("/api/stats")
 public class StatsController {
@@ -22,12 +22,12 @@ public class StatsController {
     }
 
     @GetMapping("/events")
-    public List<EventStatsResponse> allEvents() {
-        return stats.allEvents();
+    public List<EventStatsResponse> todos() {
+        return stats.todosLosEventos();
     }
 
     @GetMapping("/events/{eventId}")
-    public EventStatsResponse event(@PathVariable String eventId) {
-        return stats.forEvent(eventId);
+    public EventStatsResponse porEvento(@PathVariable String eventId) {
+        return stats.porEvento(eventId);
     }
 }

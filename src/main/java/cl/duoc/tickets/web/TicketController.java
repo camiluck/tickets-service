@@ -1,15 +1,11 @@
 package cl.duoc.tickets.web;
 
-import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +26,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/tickets")
-@Validated
 public class TicketController {
 
     private final TicketService service;
@@ -39,78 +34,64 @@ public class TicketController {
         this.service = service;
     }
 
-    /** Generar ticket: crea el PDF en EFS y (si auto-upload) lo sube a S3. */
+    // Generar ticket (PDF en EFS + subida automatica a S3)
     @PostMapping
-    public ResponseEntity<TicketResponse> create(@Valid @RequestBody CreateTicketRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(TicketResponse.from(service.create(req)));
+    public ResponseEntity<TicketResponse> crear(@Valid @RequestBody CreateTicketRequest req) {
+        Ticket t = service.crear(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(TicketResponse.from(t));
     }
 
-    /** Historial de tickets generados, con filtros opcionales. */
+    // Historial de tickets (filtros opcionales)
     @GetMapping
-    public List<TicketResponse> history(
-            @RequestParam(required = false) String eventId,
-            @RequestParam(required = false) String userId,
-            @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return service.search(eventId, userId, status, from, to).stream().map(TicketResponse::from).toList();
+    public List<TicketResponse> listar(@RequestParam(required = false) String eventId,
+                                       @RequestParam(required = false) String userId,
+                                       @RequestParam(required = false) TicketStatus status) {
+        return service.listar(eventId, userId, status).stream().map(TicketResponse::from).toList();
     }
 
     @GetMapping("/{id}")
-    public TicketResponse get(@PathVariable Long id) {
-        return TicketResponse.from(service.get(id));
+    public TicketResponse buscar(@PathVariable Long id) {
+        return TicketResponse.from(service.buscar(id));
     }
 
-    /** Subir (o volver a subir) el PDF del ticket desde EFS a S3. */
+    // Subir ticket a S3
     @PostMapping("/{id}/upload")
-    public TicketResponse upload(@PathVariable Long id) {
-        return TicketResponse.from(service.upload(id));
+    public TicketResponse subir(@PathVariable Long id) {
+        return TicketResponse.from(service.subir(id));
     }
 
-    /** Subir a S3 todos los tickets que estan solo en EFS. */
-    @PostMapping("/upload-pending")
-    public List<TicketResponse> uploadPending() {
-        return service.uploadPending().stream().map(TicketResponse::from).toList();
-    }
-
-    /** Descargar el PDF de un ticket desde S3. */
+    // Descargar un ticket desde S3
     @GetMapping("/{id}/download")
-    public ResponseEntity<byte[]> download(@PathVariable Long id) {
-        Ticket t = service.get(id);
-        byte[] content = service.downloadFromS3(id);
-        return file(content, MediaType.APPLICATION_PDF, t.getTicketCode() + ".pdf");
-    }
-
-    /** Descargar desde S3 un ZIP con los tickets de un evento y/o usuario. */
-    @GetMapping("/download")
-    public ResponseEntity<byte[]> downloadZip(@RequestParam(required = false) String eventId,
-                                              @RequestParam(required = false) String userId) {
-        byte[] zip = service.downloadZipFromS3(eventId, userId);
-        String name = "tickets"
-                + (eventId != null ? "_" + eventId : "")
-                + (userId != null ? "_" + userId : "") + ".zip";
-        return file(zip, MediaType.parseMediaType("application/zip"), name);
-    }
-
-    /** Modificar detalles del ticket: regenera el PDF y lo reemplaza en S3. */
-    @PutMapping("/{id}")
-    public TicketResponse update(@PathVariable Long id, @Valid @RequestBody UpdateTicketRequest req) {
-        return TicketResponse.from(service.update(id, req));
-    }
-
-    /** Eliminar ticket: borra el PDF de S3, de EFS y el registro. */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    private static ResponseEntity<byte[]> file(byte[] content, MediaType type, String filename) {
+    public ResponseEntity<byte[]> descargar(@PathVariable Long id) {
+        Ticket t = service.buscar(id);
+        byte[] archivo = service.descargar(id);
         return ResponseEntity.ok()
-                .contentType(type)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment().filename(filename).build().toString())
-                .contentLength(content.length)
-                .body(content);
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + t.getTicketCode() + ".pdf")
+                .body(archivo);
+    }
+
+    // Descargar tickets por usuario o evento (ZIP desde S3)
+    @GetMapping("/download")
+    public ResponseEntity<byte[]> descargarZip(@RequestParam(required = false) String eventId,
+                                               @RequestParam(required = false) String userId) {
+        byte[] zip = service.descargarZip(eventId, userId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=tickets.zip")
+                .body(zip);
+    }
+
+    // Modificar detalles del ticket
+    @PutMapping("/{id}")
+    public TicketResponse actualizar(@PathVariable Long id, @RequestBody UpdateTicketRequest req) {
+        return TicketResponse.from(service.actualizar(id, req));
+    }
+
+    // Eliminar ticket
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        service.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }
