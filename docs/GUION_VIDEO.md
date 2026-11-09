@@ -1,64 +1,58 @@
-# Guion del video de presentación (Teams)
+# Guion del video (Teams)
 
-Duración sugerida: **10 a 15 minutos**. Cada bloque indica qué criterio de la pauta cubre y sus puntos. Reparte los bloques entre los integrantes para que todos hablen.
+Duración sugerida: **10 a 12 minutos**. Repartan los bloques para que hablen ambos integrantes.
 
-Antes de grabar:
-- Lab de AWS iniciado, EC2 encendida, `EC2_HOST` y la `baseUrl` de Postman actualizados con la IP actual.
-- Postman con la colección importada.
-- Pestañas abiertas: GitHub (Actions), Docker Hub, consola S3 (bucket), consola EFS, terminal SSH a la EC2.
-- Si quieres partir de cero: borra los tickets anteriores (o usa otros `eventId`).
+**Antes de grabar**
+- Lab de AWS iniciado y EC2 encendida. Si cambió la IP, actualizar el secret `EC2_HOST` y la variable `baseUrl` de Postman.
+- Tener abiertos: Postman (con la colección importada), GitHub (pestaña Actions), Docker Hub, la consola de S3 (el bucket) y una terminal en la EC2 (EC2 → Conectar → EC2 Instance Connect).
 
 ---
 
-### 1. Introducción (≈1 min)
-- Integrantes, caso (startup de reservas de eventos con tickets) y arquitectura (diagrama del README).
-- Tecnologías: Spring Boot 3, AWS SDK v2, EFS, S3, Docker, GitHub Actions, EC2.
+### 1. Introducción (1 min)
+- Presentar el caso: una startup necesita un sistema de reservas de eventos con tickets.
+- Explicar la arquitectura con el diagrama del README: Spring Boot, EFS, S3, Docker, GitHub Actions y EC2.
 
-### 2. Pipeline automatizado (criterio 6, 20 pts) (≈2–3 min)
-1. Muestra `.github/workflows/main.yml` y explica los pasos.
-2. Haz un cambio pequeño en vivo (por ejemplo, un comentario o `info` en `application.properties`), luego `git commit` y `git push` a `main`.
-3. En **Actions**, muestra cada paso en verde: tests → imagen → deploy.
-4. En **Docker Hub**, muestra la imagen con el tag `latest` y el tag del commit recién publicados.
-5. En la terminal de la EC2: `docker ps` (contenedor recién creado), y en Postman **0. Salud** debe responder `UP`.
+### 2. Pipeline automatizado – criterio 6 (2–3 min)
+1. Mostrar `.github/workflows/main.yml` y explicar los pasos: compilar → imagen Docker → Docker Hub → despliegue en EC2.
+2. Hacer un cambio pequeño (por ejemplo, un comentario), luego `git push` a `main`.
+3. En **Actions**, mostrar todos los pasos en verde.
+4. En **Docker Hub**, mostrar la imagen actualizada.
+5. En la terminal de la EC2, ejecutar `sudo docker ps` para mostrar el contenedor recién creado. En Postman, el **Health check** debe responder `UP`.
 
-### 3. EFS como almacenamiento temporal (criterio 1, 15 pts) (≈2 min)
-1. EC2: `df -h | grep efs` muestra el EFS montado en `/mnt/efs`.
-2. `docker inspect tickets-service | grep -A3 Mounts` (o explica el `-v /mnt/efs:/app/efs` del pipeline).
-3. Postman **1. Generar tickets**: ejecuta los 3 requests y muestra en la respuesta `efsPath` y `uploadedToS3: true`.
-4. Postman **Ver archivos en EFS**, y en la EC2: `find /mnt/efs/tickets -type f` muestra la estructura `evento/usuario/ticket.pdf`.
-5. Muestra que la validación rechaza rutas inválidas (request de error 400).
+### 3. EFS como almacenamiento temporal – criterio 1 (2 min)
+1. En la EC2, ejecutar `df -h | grep efs` para mostrar el EFS montado en `/mnt/efs`.
+2. Explicar el `-v /mnt/efs:/app/efs` del pipeline: así el contenedor usa el EFS.
+3. En Postman, ejecutar **1. Generar tickets** (los 3) y mostrar `efsPath` en la respuesta.
+4. En la EC2, ejecutar `find /mnt/efs/tickets -type f` para mostrar la estructura `evento/usuario/ticket.pdf`.
 
-### 4. Subida a S3 organizada (criterio 2, 10 pts) (≈1–2 min)
-1. En la consola S3, navega `evento123/` → `usuarioX/` → `ticket001.pdf`.
-2. Postman **2. Subir tickets a S3**: subida manual de un ticket y listados por prefijo de evento y de usuario.
-3. Explica que la subida es automática al generar (`S3_AUTO_UPLOAD=true`) y que también existe el endpoint manual.
+### 4. Subida a S3 – criterio 2 (1–2 min)
+1. En la consola de S3, entrar a `evento123/` → `usuarioX/` → `ticket00X.pdf`.
+2. Explicar que la subida es automática al generar el ticket (`uploadedToS3: true`) y mostrar también **Subir ticket a S3**.
 
-### 5. Historial (criterio 5, 10 pts) (≈1 min)
-- Postman **3. Historial**: completo, por evento, por usuario, por estado y por rango de fechas.
+### 5. Historial – criterio 5 (1 min)
+- En Postman, ejecutar **3. Historial**: todos, por evento, por usuario y por estado.
 
-### 6. Modificar y actualizar en S3 (criterio 3, 15 pts) (≈2 min)
-1. **Cambiar asiento y precio**: muestra `fileVersion: 2`. En la consola S3 cambia la fecha *Last modified* del objeto; descárgalo y muestra el PDF con el nuevo asiento.
-2. **Confirmar pago de reserva**: el estado pasa de RESERVADO a PAGADO.
-3. **Transferir a otro usuario**: el archivo desaparece de `usuarioX/` y aparece en `usuarioZ/` (muéstralo en S3).
+### 6. Modificar y actualizar en S3 – criterio 3 (2 min)
+1. Ejecutar **Cambiar asiento y precio** y mostrar que `fileVersion` sube a 2.
+2. En S3, mostrar que cambió la fecha de *Última modificación* del archivo.
+3. Ejecutar **Confirmar pago**: el estado pasa de RESERVADO a PAGADO.
 
-### 7. Descargar desde S3 (criterio 4, 10 pts) (≈1 min)
-- **Descargar PDF de un ticket** (Send and Download): abre el PDF.
-- **ZIP por evento** y **ZIP por usuario**: abre el ZIP y muestra la estructura de carpetas.
+### 7. Descargar desde S3 – criterio 4 (1 min)
+- Ejecutar **Descargar un ticket** (en Postman: *Send and Download*), abrir el PDF y mostrar el asiento nuevo.
+- Ejecutar **Descargar por evento** y **por usuario**, y abrir el ZIP.
 
-### 8. Estadísticas (≈1 min)
-- **6. Estadísticas**: todos los eventos y `evento123` (vendidos, reservados, ingresos, monto reservado).
+### 8. Estadísticas (1 min)
+- Ejecutar **6. Estadísticas** y mostrar vendidos, reservados e ingresos del evento.
 
-### 9. Eliminar (≈30 s)
-- **Eliminar ticket**, después la comprobación (404), y muestra que ya no está en S3 ni en el EFS.
+### 9. Eliminar (30 s)
+- Ejecutar **Eliminar ticket** y luego la comprobación (404). Mostrar en S3 que el archivo ya no está.
 
-### 10. Cierre (≈30 s)
-- Repaso rápido de cómo se cumplió cada requisito y por qué EFS (temporal, compartido, baja latencia) + S3 (durable, económico, organizado por llaves).
-
-> Criterio 7 (20 pts): el video debe mostrar **todas** las funciones en vivo y explicar cómo cumple cada requisito. Sigue este orden y no te saltes ninguno.
+### 10. Cierre (30 s)
+- Repasar cómo se cumplió cada requisito y por qué usar EFS (temporal, compartido) junto a S3 (permanente y organizado).
 
 ---
 
-## Checklist de entregables
+## Checklist de entrega
 - [ ] Link del video de Teams
-- [ ] Link del repositorio GitHub (público o con acceso al docente)
-- [ ] ZIP con la documentación (`README.md`, `docs/`, colección Postman y capturas)
+- [ ] Link del repositorio: https://github.com/camiluck/tickets-service
+- [ ] ZIP con la documentación

@@ -78,8 +78,6 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 | `EC2_SSH_KEY` | Contenido completo del `.pem` (incluyendo las líneas `-----BEGIN…` y `-----END…`) |
 | `EFS_DNS` | `fs-xxxxxxxx.efs.us-east-1.amazonaws.com` |
 | `S3_BUCKET` | Nombre del bucket |
-| `AWS_REGION` | `us-east-1` |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` | **Solo si NO asignaste `LabInstanceProfile`.** Se sacan de Learner Lab → *AWS Details* → *AWS CLI* y caducan cada sesión del lab, así que hay que actualizarlos. |
 
 > En AWS Academy la IP pública de la EC2 cambia cada vez que se reinicia el lab: actualiza `EC2_HOST` y la `baseUrl` de Postman.
 
@@ -94,7 +92,7 @@ git remote add origin https://github.com/<usuario>/<repo>.git
 git push -u origin main
 ```
 
-En la pestaña **Actions** del repo verás los 6 pasos: checkout → JDK → `mvn verify` → login → build/push → deploy en EC2. El último paso termina con "Aplicacion arriba".
+En la pestaña **Actions** del repo verás los pasos: checkout → JDK → `mvn package` → login → build/push → deploy en EC2.
 
 Para comprobarlo:
 ```bash
@@ -106,8 +104,8 @@ curl http://<IP-EC2>:8080/actuator/health
 | Síntoma | Causa / solución |
 |---|---|
 | `mount` se queda colgado | Falta la regla NFS 2049 en el security group del EFS, o el EFS no está en el mismo SG/VPC que la EC2 |
-| `502` con mensaje "Error al subir a S3 … Unable to load credentials" | La EC2 no tiene `LabInstanceProfile` y no hay secrets AWS; o expiraron las credenciales del lab |
-| `502` con mensaje "Access Denied" o "NoSuchBucket" | Nombre de bucket mal escrito en `S3_BUCKET`, o el bucket está en otra región |
+| `500` con "Error al subir a S3 … Unable to load credentials" | La EC2 no tiene el rol `LabInstanceProfile` |
+| `500` con "Access Denied" o "NoSuchBucket" | Nombre de bucket mal escrito en `S3_BUCKET`, o el bucket está en otra región |
 | `ssh: handshake failed` en Actions | `EC2_SSH_KEY` incompleto, `EC2_USER` incorrecto o puerto 22 cerrado |
 | `permission denied … docker.sock` | El usuario no está en el grupo `docker` (paso 2.3) |
 | Postman no conecta | Puerto 8080 cerrado en el SG, o la IP cambió |

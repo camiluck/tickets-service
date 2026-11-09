@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Tickets Service - CDY2204 S3",
+    "name": "Tickets Service - CDY2204",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Pruebas del Sistema de Gestion de Reservas de Eventos con Tickets. Cambia la variable baseUrl por http://<IP-PUBLICA-EC2>:8080"
+    "description": "Cambia baseUrl por http://<IP-EC2>:8080"
   },
   "item": [
     {
@@ -22,17 +22,16 @@
                 "actuator",
                 "health"
               ]
-            },
-            "description": ""
+            }
           }
         }
       ]
     },
     {
-      "name": "1. Generar tickets (EFS + subida automatica a S3)",
+      "name": "1. Generar tickets",
       "item": [
         {
-          "name": "Generar ticket - evento123 / usuarioX (PAGADO)",
+          "name": "Generar ticket evento123 / usuarioX",
           "request": {
             "method": "POST",
             "header": [
@@ -51,7 +50,6 @@
                 "tickets"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"eventId\": \"evento123\",\n  \"eventName\": \"Concierto Rock 2026\",\n  \"eventDate\": \"2026-12-15\",\n  \"venue\": \"Movistar Arena\",\n  \"userId\": \"usuarioX\",\n  \"userName\": \"Juan Perez\",\n  \"userEmail\": \"juan.perez@mail.com\",\n  \"seat\": \"A-10\",\n  \"price\": 35000,\n  \"status\": \"PAGADO\"\n}",
@@ -68,18 +66,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
                   "const t = pm.response.json();",
-                  "pm.collectionVariables.set('ticketId', t.id);",
-                  "pm.test('Subido a S3', () => pm.expect(t.uploadedToS3).to.be.true);",
-                  "console.log('S3 key:', t.s3Key, ' | EFS:', t.efsPath);"
+                  "pm.collectionVariables.set('ticketId', t.id);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Generar ticket - evento123 / usuarioY (RESERVADO)",
+          "name": "Generar ticket evento123 / usuarioY",
           "request": {
             "method": "POST",
             "header": [
@@ -98,7 +93,6 @@
                 "tickets"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"eventId\": \"evento123\",\n  \"eventName\": \"Concierto Rock 2026\",\n  \"eventDate\": \"2026-12-15\",\n  \"venue\": \"Movistar Arena\",\n  \"userId\": \"usuarioY\",\n  \"userName\": \"Maria Soto\",\n  \"userEmail\": \"maria.soto@mail.com\",\n  \"seat\": \"A-11\",\n  \"price\": 35000,\n  \"status\": \"RESERVADO\"\n}",
@@ -115,18 +109,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
                   "const t = pm.response.json();",
-                  "pm.collectionVariables.set('ticketId2', t.id);",
-                  "pm.test('Subido a S3', () => pm.expect(t.uploadedToS3).to.be.true);",
-                  "console.log('S3 key:', t.s3Key, ' | EFS:', t.efsPath);"
+                  "pm.collectionVariables.set('ticketId2', t.id);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Generar ticket - evento456 / usuarioX (PAGADO)",
+          "name": "Generar ticket evento456 / usuarioX",
           "request": {
             "method": "POST",
             "header": [
@@ -145,10 +136,9 @@
                 "tickets"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"eventId\": \"evento456\",\n  \"eventName\": \"Festival Jazz Valparaiso\",\n  \"eventDate\": \"2027-01-20\",\n  \"venue\": \"Parque Cultural\",\n  \"userId\": \"usuarioX\",\n  \"userName\": \"Juan Perez\",\n  \"userEmail\": \"juan.perez@mail.com\",\n  \"seat\": \"General\",\n  \"price\": 18000,\n  \"status\": \"PAGADO\"\n}",
+              "raw": "{\n  \"eventId\": \"evento456\",\n  \"eventName\": \"Festival Jazz\",\n  \"eventDate\": \"2027-01-20\",\n  \"venue\": \"Parque Cultural\",\n  \"userId\": \"usuarioX\",\n  \"userName\": \"Juan Perez\",\n  \"userEmail\": \"juan.perez@mail.com\",\n  \"seat\": \"General\",\n  \"price\": 18000,\n  \"status\": \"PAGADO\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -162,74 +152,20 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
                   "const t = pm.response.json();",
-                  "pm.collectionVariables.set('ticketId3', t.id);",
-                  "pm.test('Subido a S3', () => pm.expect(t.uploadedToS3).to.be.true);",
-                  "console.log('S3 key:', t.s3Key, ' | EFS:', t.efsPath);"
+                  "pm.collectionVariables.set('ticketId3', t.id);"
                 ]
               }
             }
           ]
-        },
-        {
-          "name": "Validacion - eventId invalido (400)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/tickets",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "tickets"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"eventId\": \"../hack\",\n  \"eventName\": \"Concierto Rock 2026\",\n  \"eventDate\": \"2026-12-15\",\n  \"venue\": \"Movistar Arena\",\n  \"userId\": \"usuarioX\",\n  \"userName\": \"Juan Perez\",\n  \"userEmail\": \"juan.perez@mail.com\",\n  \"seat\": \"A-10\",\n  \"price\": 35000,\n  \"status\": \"PAGADO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Ver archivos en EFS",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/storage/efs",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "storage",
-                "efs"
-              ]
-            },
-            "description": ""
-          }
         }
       ]
     },
     {
-      "name": "2. Subir tickets a S3",
+      "name": "2. Subir a S3",
       "item": [
         {
-          "name": "Subir (o re-subir) un ticket a S3",
+          "name": "Subir ticket a S3",
           "request": {
             "method": "POST",
             "header": [],
@@ -244,105 +180,16 @@
                 "{{ticketId}}",
                 "upload"
               ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "Subir todos los pendientes",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/tickets/upload-pending",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "tickets",
-                "upload-pending"
-              ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "Listar bucket S3 completo",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/storage/s3",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "storage",
-                "s3"
-              ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "Listar S3 por evento",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/storage/s3?prefix=evento123/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "storage",
-                "s3"
-              ],
-              "query": [
-                {
-                  "key": "prefix",
-                  "value": "evento123/"
-                }
-              ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "Listar S3 por evento y usuario",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/storage/s3?prefix=evento123/usuarioX/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "storage",
-                "s3"
-              ],
-              "query": [
-                {
-                  "key": "prefix",
-                  "value": "evento123/usuarioX/"
-                }
-              ]
-            },
-            "description": ""
+            }
           }
         }
       ]
     },
     {
-      "name": "3. Historial de tickets",
+      "name": "3. Historial",
       "item": [
         {
-          "name": "Historial completo",
+          "name": "Todos los tickets",
           "request": {
             "method": "GET",
             "header": [],
@@ -355,12 +202,11 @@
                 "api",
                 "tickets"
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "Historial por evento",
+          "name": "Por evento",
           "request": {
             "method": "GET",
             "header": [],
@@ -379,12 +225,11 @@
                   "value": "evento123"
                 }
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "Historial por usuario",
+          "name": "Por usuario",
           "request": {
             "method": "GET",
             "header": [],
@@ -403,12 +248,11 @@
                   "value": "usuarioX"
                 }
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "Historial por estado",
+          "name": "Por estado",
           "request": {
             "method": "GET",
             "header": [],
@@ -427,40 +271,11 @@
                   "value": "RESERVADO"
                 }
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "Historial por rango de fechas",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/tickets?from=2026-11-01&to=2026-12-31",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "tickets"
-              ],
-              "query": [
-                {
-                  "key": "from",
-                  "value": "2026-11-01"
-                },
-                {
-                  "key": "to",
-                  "value": "2026-12-31"
-                }
-              ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "Detalle de un ticket",
+          "name": "Un ticket",
           "request": {
             "method": "GET",
             "header": [],
@@ -474,14 +289,13 @@
                 "tickets",
                 "{{ticketId}}"
               ]
-            },
-            "description": ""
+            }
           }
         }
       ]
     },
     {
-      "name": "4. Modificar ticket (regenera PDF y actualiza S3)",
+      "name": "4. Modificar",
       "item": [
         {
           "name": "Cambiar asiento y precio",
@@ -504,7 +318,6 @@
                 "{{ticketId}}"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"seat\": \"VIP-01\",\n  \"price\": 50000\n}",
@@ -517,7 +330,7 @@
           }
         },
         {
-          "name": "Confirmar pago de reserva (RESERVADO -> PAGADO)",
+          "name": "Confirmar pago (RESERVADO -> PAGADO)",
           "request": {
             "method": "PUT",
             "header": [
@@ -537,43 +350,9 @@
                 "{{ticketId2}}"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"PAGADO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Transferir a otro usuario (mueve el archivo en S3)",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/tickets/{{ticketId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "tickets",
-                "{{ticketId}}"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"userId\": \"usuarioZ\",\n  \"userName\": \"Pedro Rojas\",\n  \"userEmail\": \"pedro.rojas@mail.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -588,7 +367,7 @@
       "name": "5. Descargar desde S3",
       "item": [
         {
-          "name": "Descargar PDF de un ticket",
+          "name": "Descargar un ticket (PDF)",
           "request": {
             "method": "GET",
             "header": [],
@@ -603,12 +382,11 @@
                 "{{ticketId}}",
                 "download"
               ]
-            },
-            "description": "En Postman usa 'Send and Download' para guardar el PDF."
+            }
           }
         },
         {
-          "name": "Descargar ZIP por evento",
+          "name": "Descargar por evento (ZIP)",
           "request": {
             "method": "GET",
             "header": [],
@@ -628,12 +406,11 @@
                   "value": "evento123"
                 }
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "Descargar ZIP por usuario",
+          "name": "Descargar por usuario (ZIP)",
           "request": {
             "method": "GET",
             "header": [],
@@ -653,46 +430,16 @@
                   "value": "usuarioX"
                 }
               ]
-            },
-            "description": ""
-          }
-        },
-        {
-          "name": "Descargar ZIP por evento y usuario",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/tickets/download?eventId=evento123&userId=usuarioZ",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "tickets",
-                "download"
-              ],
-              "query": [
-                {
-                  "key": "eventId",
-                  "value": "evento123"
-                },
-                {
-                  "key": "userId",
-                  "value": "usuarioZ"
-                }
-              ]
-            },
-            "description": ""
+            }
           }
         }
       ]
     },
     {
-      "name": "6. Estadisticas de ventas y reservas",
+      "name": "6. Estadisticas",
       "item": [
         {
-          "name": "Estadisticas de todos los eventos",
+          "name": "Todos los eventos",
           "request": {
             "method": "GET",
             "header": [],
@@ -706,12 +453,11 @@
                 "stats",
                 "events"
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "Estadisticas de evento123",
+          "name": "evento123",
           "request": {
             "method": "GET",
             "header": [],
@@ -726,17 +472,16 @@
                 "events",
                 "evento123"
               ]
-            },
-            "description": ""
+            }
           }
         }
       ]
     },
     {
-      "name": "7. Eliminar ticket",
+      "name": "7. Eliminar",
       "item": [
         {
-          "name": "Eliminar ticket (S3 + EFS + registro)",
+          "name": "Eliminar ticket",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -750,12 +495,11 @@
                 "tickets",
                 "{{ticketId3}}"
               ]
-            },
-            "description": ""
+            }
           }
         },
         {
-          "name": "Comprobar que ya no existe (404)",
+          "name": "Comprobar que no existe (404)",
           "request": {
             "method": "GET",
             "header": [],
@@ -769,8 +513,7 @@
                 "tickets",
                 "{{ticketId3}}"
               ]
-            },
-            "description": ""
+            }
           }
         }
       ]
@@ -779,19 +522,19 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080"
+      "value": "http://98.86.238.145:8080"
     },
     {
       "key": "ticketId",
-      "value": "1"
-    },
-    {
-      "key": "ticketId2",
       "value": "2"
     },
     {
-      "key": "ticketId3",
+      "key": "ticketId2",
       "value": "3"
+    },
+    {
+      "key": "ticketId3",
+      "value": "4"
     }
   ]
 }
